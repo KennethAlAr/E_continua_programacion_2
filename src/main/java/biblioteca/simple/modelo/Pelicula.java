@@ -54,12 +54,12 @@ public class Pelicula extends Producto  implements Prestable {
     @Override
     public String toString() {
         return  "Pelicula{" +
-                "director='" + director + '\'' +
-                ", minutosDuracion=" + minutosDuracion +
-                ", formato=" + formato +
-                ", anho='" + anho + '\'' +
+                "id=" + id +
                 ", titulo='" + titulo + '\'' +
-                ", id=" + id +
+                ", anho='" + anho + '\'' +
+                ", formato=" + formato +
+                ", director='" + director + '\'' +
+                ", minutosDuracion=" + minutosDuracion +
                 '}';
     }
 }

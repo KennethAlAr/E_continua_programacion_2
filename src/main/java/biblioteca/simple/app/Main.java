@@ -4,7 +4,6 @@ import biblioteca.simple.contratos.Prestable;
 import biblioteca.simple.modelo.*;
 import biblioteca.simple.servicios.Catalogo;
 
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -12,14 +11,11 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-
     private static final Catalogo catalogo = new Catalogo();
 
     private static final List<Usuario> usuarios =new ArrayList<>();
 
-
     private static final Scanner sc = new Scanner(System.in);
-
 
     public static void main(String[] args) {
         cargarDatos();
@@ -29,12 +25,14 @@ public class Main {
     private static void cargarDatos(){
         catalogo.alta(new Libro(1, "El Quijote", "1608", Formato.FISICO, "25225", "Cervantes"));
         catalogo.alta(new Libro(2, "El nombre del viento", "2007", Formato.FISICO, "9788401352836", "Patrick Rothfuss"));
-        catalogo.alta(new Pelicula(3, "El Padrino", "1972", Formato.FISICO, "rancis Ford Coppola", 175));
+        catalogo.alta(new Pelicula(3, "El Padrino", "1972", Formato.FISICO, "Francis Ford Coppola", 175));
         catalogo.alta(new Pelicula(4, "Parásitos", "2019", Formato.FISICO, "Bong Joon-ho", 132));
+        // Añadimos dos juegos al catálogo
+        catalogo.alta(new Videojuego(5, "Hollow Knight: Silksong", "2025", Formato.DIGITAL, Plataforma.NINTENDO, 7, "Team Kitchen", 7.56));
+        catalogo.alta(new Videojuego(6, "Outer Wilds", "2020", Formato.DIGITAL, Plataforma.PC, 7, "Mobius Digital", 8.34));
 
         usuarios.add(new Usuario(1, "Juan"));
         usuarios.add(new Usuario(2, "María"));
-
     }
 
     private static void menu(){
@@ -49,6 +47,7 @@ public class Main {
             System.out.println("3. Buscar por año");
             System.out.println("4. Prestar Producto");
             System.out.println("5. Devolver Producto");
+            System.out.println("6. Crear nuevo usuario");
             System.out.println("0. Salir");
             while(!sc.hasNextInt()) sc.next();
             op = sc.nextInt();
@@ -61,6 +60,7 @@ public class Main {
                 case 3 -> buscarPorAnio();
                 case 4 -> prestar();
                 case 5 -> devolver();
+                case 6 -> crearUsuario();
                 case 0 -> System.out.println("Sayonara!");
                 default -> System.out.println("Opción no válida");
             }
@@ -79,8 +79,6 @@ public class Main {
         System.out.println("==Lista de productos ===");
 
         for(Producto p : lista) System.out.println("- " + p);
-
-
     }
 
     private static void buscarPorTitulo(){
@@ -91,6 +89,7 @@ public class Main {
 
     private static void buscarPorAnio(){
         System.out.println("Año: ");
+        while(!sc.hasNextInt()) sc.next();
         int a = sc.nextInt();
         sc.nextLine();
         catalogo.buscar(a).forEach(p -> System.out.println("- " + p));
@@ -131,54 +130,79 @@ public class Main {
         disponibles.forEach( p -> System.out.println("- ID: " + p.getId() + " | " + p));
 
         System.out.println("Escribe el id del producto: ");
+
+        while(!sc.hasNextInt()) sc.next();
         int id = sc.nextInt();
         sc.nextLine();
 
         Producto pEncontrado = disponibles.stream()
-                .filter(p -> {
-                    try {
-                        return p.getId() == id;
-                    } catch (NumberFormatException e) {
-                        return false;
+        .filter(p -> {
+            try {
+                return p.getId() == id;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        })
+        .findFirst()
+        .orElse(null);
+
+        if (pEncontrado == null){
+            System.out.println("El id no existe");
+            return;
+        }
+
+        // Aplicamos la opción de crear un usuario nuevo si al hacer el préstamo el usuario no existe
+        Usuario u1 = null;
+        int opcion;
+
+        do {
+            System.out.println("¿Qué quieres hacer?");
+            System.out.println("1. Prestar a un usuario existente");
+            System.out.println("2. Crear un nuevo usuario y prestar");
+            while(!sc.hasNextInt()) sc.next();
+            opcion = sc.nextInt();
+            sc.nextLine();
+            switch (opcion) {
+                case 1 -> {
+                    // El caso 1 es exactamente como lo teníamos antes. Si el código introducido encaja con algún
+                    // usuario, el préstamo se realiza a ese usuario, en caso contrario se cierra el préstamo.
+                    listarUsuarios();
+
+                    System.out.println("Ingresa código de usuario");
+
+                    while (!sc.hasNextInt()) sc.next();
+                    int cUsuario = sc.nextInt();
+                    sc.nextLine();
+                    u1 = getUsuarioPorCodigo(cUsuario);
+
+                    if (u1 == null) {
+                        System.out.println("Usuario no encontrado");
+                        return;
                     }
-                })
+                }
+                case 2 -> {
+                    u1 = crearUsuario();
+                }
+                case 3 -> {
+                    System.out.println("Préstamo cancelado");
+                    return;
+                }
+                default -> System.out.println("Opción no válida");
+            }
+        }while(!(opcion == 1 || opcion == 2));
 
-                .findFirst()
-                .orElse(null);
-
-                 if (pEncontrado == null){
-                     System.out.println("El id no existe");
-                     return;
-                 }
-
-
-                 listarUsuarios();
-
-                 System.out.println("Ingresa código de usurio");
-
-                 int cUsuario = sc.nextInt();
-                 sc.nextLine();
-                 Usuario u1 = getUsuarioPorCodigo(cUsuario);
-
-                 if (u1 == null){
-                     System.out.println("Usuari ono encontrado");
-                 }
-
-                 Prestable pPrestable = (Prestable) pEncontrado;
-                 pPrestable.prestar(u1);
-
+         Prestable pPrestable = (Prestable) pEncontrado;
+         pPrestable.prestar(u1);
     }
 
 
     public static void devolver(){
-
-
         List<Producto> pPrestados = catalogo.listar().stream()
                 .filter(p -> p instanceof Prestable pN && pN.estaPrestado())
                 .collect(Collectors.toList());
 
         if ( pPrestados.isEmpty() ) {
-            System.out.println("No hay productos para prestar");
+            System.out.println("No hay productos prestados");
             return;
         }
 
@@ -186,6 +210,7 @@ public class Main {
         pPrestados.forEach( p -> System.out.println("- ID: " + p.getId() + " | " + p));
 
         System.out.println("Escribe el id del producto: ");
+        while(!sc.hasNextInt()) sc.next();
         int id = sc.nextInt();
         sc.nextLine();
 
@@ -212,6 +237,32 @@ public class Main {
 
     }
 
+    public static Usuario crearUsuario() {
+        System.out.println("¿Cuál es el nombre del nuevo usuario?");
+        // Aunque el nombre ya exista no lo comprobamos porque puede haber dos usuarios con el mismo nombre
+        String nombre = sc.nextLine();
 
+        int id;
+        // Sin embargo, si comprobamos el "id" del usuario porque este es único
+        boolean idValido;
+        do {
+            idValido = true;
+            System.out.println("¿Cuál es el número de código del nuevo usuario?");
+            while (!sc.hasNextInt()) sc.next();
+            id = sc.nextInt();
+            sc.nextLine();
+            for (Usuario u : usuarios) {
+                if (id == u.getId()) {
+                    System.out.println("Ya existe un usuario con ese código");
+                    idValido = false;
+                    break;
+                }
+            }
+        } while (!idValido);
+        Usuario nuevoUsuario = new Usuario(id, nombre);
+        usuarios.add(nuevoUsuario);
+        System.out.println("Usuario " + nombre + " con código " + id + " creado correctamente.");
+        return nuevoUsuario;
+    }
 
 }
