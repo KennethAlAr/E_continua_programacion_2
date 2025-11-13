@@ -249,7 +249,7 @@ public class Main {
         String nombre = sc.nextLine();
 
         int id;
-        // Sin embargo, si comprobamos el "id" del usuario porque este es único
+        // Sin embargo, sí comprobamos el "id" del usuario porque este es único
         boolean idValido;
         do {
             idValido = true;
